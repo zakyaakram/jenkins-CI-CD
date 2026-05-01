@@ -1,8 +1,12 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+
     environment {
-        DOCKER_IMAGE = "zakyaakram52/jenkins-app"
+        DOCKER_IMAGE = "zakyaakram52/jenkins-app:${BUILD_NUMBER}"
         KUBE_NAMESPACE = "ivolve"
     }
 
@@ -10,7 +14,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git 'https://github.com/zakyaakram/jenkins-CI-CD.git'
+                git branch: 'main', url: 'https://github.com/zakyaakram/jenkins-CI-CD.git'
             }
         }
 
@@ -56,7 +60,7 @@ pipeline {
         stage('Update Deployment File') {
             steps {
                 sh '''
-                sed -i "s|image:.*|image: $DOCKER_IMAGE|g" deployment.yaml
+                sed -i "s|image: zakyaakram52/jenkins-app.*|image: $DOCKER_IMAGE|g" deployment.yaml
                 '''
             }
         }
@@ -64,7 +68,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                kubectl apply -f deployment.yaml
+                kubectl apply -f deployment.yaml -n $KUBE_NAMESPACE
                 '''
             }
         }
