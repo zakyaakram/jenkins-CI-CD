@@ -2,24 +2,22 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE   = "zakyaakram52/jenkins-app:latest"
+        DOCKER_IMAGE   = "zakyaakram52/jenkins-app:${BUILD_NUMBER}"
         KUBE_NAMESPACE = "ivolve"
     }
 
     stages {
 
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
         stage('Checkout') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'github-creds',
-                    usernameVariable: 'GIT_USER',
-                    passwordVariable: 'GIT_PASS'
-                )]) {
-                    sh '''
-                    git config --global credential.helper store
-                    git clone https://$GIT_USER:$GIT_PASS@github.com/zakyaakram/jenkins-CI-CD.git
-                    '''
-                }
+                git credentialsId: 'github-creds',
+                    url: 'https://github.com/zakyaakram/jenkins-CI-CD.git'
             }
         }
 
@@ -49,7 +47,6 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                docker version
                 docker build -t $DOCKER_IMAGE .
                 '''
             }
@@ -70,22 +67,10 @@ pipeline {
             }
         }
 
-        stage('Delete Local Image') {
-            steps {
-                sh 'docker rmi $DOCKER_IMAGE || true'
-            }
-        }
-
         stage('Update Deployment File') {
             steps {
                 sh '''
-                echo "Before update:"
-                cat deployment.yaml
-
-                sed -i "s|image:.*|image: $DOCKER_IMAGE|g" deployment.yaml
-
-                echo "After update:"
-                cat deployment.yaml
+                sed -i "s|image: .*|image: ${DOCKER_IMAGE}|g" deployment.yaml
                 '''
             }
         }
@@ -105,6 +90,7 @@ pipeline {
 
     post {
         always {
+            sh 'rm -f kubeconfig.yaml || true'
             echo "Pipeline finished"
         }
 
