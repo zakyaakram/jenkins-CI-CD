@@ -101,23 +101,22 @@ EOF
     steps {
         withCredentials([file(credentialsId: 'kube-config', variable: 'KUBECONFIG')]) {
             sh '''
-            echo "===== DEBUG ====="
+            echo "=== KUBECONFIG PATH ==="
             echo $KUBECONFIG
             ls -l $KUBECONFIG
 
-            echo "===== KUBE CONFIG ====="
-            kubectl config view
+            echo "=== CURRENT CONTEXT ==="
+            kubectl config current-context
 
-            echo "===== TRY CONNECTION ====="
+            echo "=== CLUSTER INFO ==="
+            kubectl cluster-info
+
+            echo "=== TEST ACCESS ==="
             kubectl get nodes
-
-            kubectl apply -f deployment.yaml -n $KUBE_NAMESPACE
-            kubectl get pods -n $KUBE_NAMESPACE
             '''
         }
     }
 }
-
     post {
         always {
             echo "Pipeline finished"
