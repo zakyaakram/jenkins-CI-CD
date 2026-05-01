@@ -2,15 +2,15 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "zakyaakram/jenkins-app:latest"
+        DOCKER_IMAGE = "zakyaakram/jenkins-app:${BUILD_NUMBER}"
         KUBE_NAMESPACE = "ivolve"
+        KUBE_SERVER = "https://192.168.58.2:8443"   // ← replace with minikube ip
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                // مهم: ده بيضمن إن Jenkins يجيب repo الصح + branch الصح
                 checkout scm
             }
         }
@@ -21,8 +21,6 @@ pipeline {
                 echo "===== WORKSPACE ====="
                 pwd
                 ls -la
-                echo "===== SEARCH DEPLOYMENT FILE ====="
-                find . -name deployment.yaml
                 '''
             }
         }
@@ -43,7 +41,6 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                docker version
                 docker build -t $DOCKER_IMAGE .
                 '''
             }
@@ -69,14 +66,16 @@ pipeline {
                 sh 'docker rmi $DOCKER_IMAGE || true'
             }
         }
+
         stage('Create Deployment File') {
-    steps {
-        sh '''
-        cat <<EOF > deployment.yaml
+            steps {
+                sh '''
+                cat <<EOF > deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: jenkins-app
+  namespace: $KUBE_NAMESPACE
 spec:
   replicas: 1
   selector:
@@ -93,21 +92,35 @@ spec:
         ports:
         - containerPort: 8080
 EOF
-        '''
-    }
-}
+                '''
+            }
+        }
 
-   stage('Deploy to Kubernetes') {
-    steps {
-        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-            sh '''
-            export KUBECONFIG=$KUBECONFIG
-            kubectl apply -f deployment.yaml -n $KUBE_NAMESPACE
-            kubectl get pods -n $KUBE_NAMESPACE
-            '''
+        stage('Deploy to Kubernetes') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'ServiceAccount-Token', variable: 'TOKEN')
+                ]) {
+                    sh '''
+                    echo "Deploying to Kubernetes..."
+
+                    kubectl apply -f deployment.yaml \
+                      --server=$KUBE_SERVER \
+                      --token=$TOKEN \
+                      --insecure-skip-tls-verify=true \
+                      --validate=false
+
+                    echo "Checking Pods..."
+                    kubectl get pods -n $KUBE_NAMESPACE \
+                      --server=$KUBE_SERVER \
+                      --token=$TOKEN \
+                      --insecure-skip-tls-verify=true
+                    '''
+                }
+            }
         }
     }
-}
+
     post {
         always {
             echo "Pipeline finished"
