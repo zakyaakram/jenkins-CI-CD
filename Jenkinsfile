@@ -10,6 +10,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
+                cleanWs()  // clears workspace before cloning
                 withCredentials([usernamePassword(
                     credentialsId: 'github-creds',
                     usernameVariable: 'GIT_USER',
@@ -59,61 +60,3 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'docker-creds',
-                    usernameVariable: 'USER',
-                    passwordVariable: 'PASS'
-                )]) {
-                    sh '''
-                    echo $PASS | docker login -u $USER --password-stdin
-                    docker push $DOCKER_IMAGE
-                    '''
-                }
-            }
-        }
-
-        stage('Delete Local Image') {
-            steps {
-                sh 'docker rmi $DOCKER_IMAGE || true'
-            }
-        }
-
-        stage('Update Deployment File') {
-            steps {
-                sh '''
-                echo "Before update:"
-                cat deployment.yaml
-
-                sed -i "s|image:.*|image: $DOCKER_IMAGE|g" deployment.yaml
-
-                echo "After update:"
-                cat deployment.yaml
-                '''
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                withCredentials([string(credentialsId: 'kube-config', variable: 'KUBECONFIG_CONTENT')]) {
-                    writeFile file: 'kubeconfig.yaml', text: "$KUBECONFIG_CONTENT"
-                    sh '''
-                    kubectl --kubeconfig=kubeconfig.yaml apply -f deployment.yaml -n $KUBE_NAMESPACE
-                    kubectl --kubeconfig=kubeconfig.yaml get pods -n $KUBE_NAMESPACE
-                    '''
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            echo "Pipeline finished"
-        }
-
-        success {
-            echo "Deployment SUCCESS 🚀"
-        }
-
-        failure {
-            echo "Pipeline FAILED ❌"
-        }
-    }
-}
