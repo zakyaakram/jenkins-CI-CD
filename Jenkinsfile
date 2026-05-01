@@ -97,22 +97,13 @@ EOF
     }
 }
 
-      stage('Deploy to Kubernetes') {
+   stage('Deploy to Kubernetes') {
     steps {
-        withCredentials([file(credentialsId: 'kube-config', variable: 'KUBECONFIG')]) {
+        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
             sh '''
-            echo "=== KUBECONFIG PATH ==="
-            echo $KUBECONFIG
-            ls -l $KUBECONFIG
-
-            echo "=== CURRENT CONTEXT ==="
-            kubectl config current-context
-
-            echo "=== CLUSTER INFO ==="
-            kubectl cluster-info
-
-            echo "=== TEST ACCESS ==="
-            kubectl get nodes
+            export KUBECONFIG=$KUBECONFIG
+            kubectl apply -f deployment.yaml -n $KUBE_NAMESPACE
+            kubectl get pods -n $KUBE_NAMESPACE
             '''
         }
     }
