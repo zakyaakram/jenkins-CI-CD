@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "zakyaakram/jenkins-app:latest"
+        DOCKER_IMAGE = "zakyaakram52/jenkins-app:latest"
         KUBE_NAMESPACE = "ivolve"
     }
 
