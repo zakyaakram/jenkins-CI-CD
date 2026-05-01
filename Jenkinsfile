@@ -97,11 +97,20 @@ EOF
     }
 }
 
-       stage('Deploy to Kubernetes') {
+      stage('Deploy to Kubernetes') {
     steps {
         withCredentials([file(credentialsId: 'kube-config', variable: 'KUBECONFIG')]) {
             sh '''
-            export KUBECONFIG=$KUBECONFIG
+            echo "===== DEBUG ====="
+            echo $KUBECONFIG
+            ls -l $KUBECONFIG
+
+            echo "===== KUBE CONFIG ====="
+            kubectl config view
+
+            echo "===== TRY CONNECTION ====="
+            kubectl get nodes
+
             kubectl apply -f deployment.yaml -n $KUBE_NAMESPACE
             kubectl get pods -n $KUBE_NAMESPACE
             '''
