@@ -10,35 +10,81 @@ pipeline {
 
     stages {
 
-        // 1. Clone Repo
+        // 🔥 Strong cleanup (fixes your main issue)
+        stage('Clean Workspace') {
+            steps {
+                deleteDir()
+            }
+        }
+
+        // 🔍 Checkout code
         stage('Checkout Code') {
             steps {
                 git url: 'https://github.com/Ibrahim-Adel15/Jenkins_App.git'
             }
         }
 
-        // 2. Unit Test
+        // 🧪 Debug (VERY IMPORTANT for failures)
+        stage('Debug Workspace') {
+            steps {
+                sh '''
+                echo "Current directory:"
+                pwd
+                echo "Files:"
+                ls -la
+                '''
+            }
+        }
+
+        // ⚙️ Verify tools (prevents silent failures)
+        stage('Check Tools') {
+            steps {
+                sh '''
+                java -version
+                mvn -v
+                '''
+            }
+        }
+
+        // 🧹 Fix Maven corruption issues
+        stage('Reset Maven Cache') {
+            steps {
+                sh 'rm -rf ~/.m2/repository || true'
+            }
+        }
+
+        // 1️⃣ Unit Test
         stage('Run Unit Tests') {
             steps {
                 sh 'mvn clean test'
             }
         }
 
-        // 3. Build App
+        // 2️⃣ Build App
         stage('Build Application') {
             steps {
                 sh 'mvn clean package -DskipTests'
             }
         }
 
-        // 4. Build Docker Image
-        stage('Build Docker Image') {
+        // 🐳 Clean Docker (prevents disk issues)
+        stage('Docker Cleanup') {
             steps {
-                sh 'docker build -t $FULL_IMAGE .'
+                sh 'docker system prune -af || true'
             }
         }
 
-        // 5. Push to Docker Hub
+        // 3️⃣ Build Docker Image
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                echo "Building image: $FULL_IMAGE"
+                docker build --no-cache -t $FULL_IMAGE .
+                '''
+            }
+        }
+
+        // 4️⃣ Push to Docker Hub
         stage('Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(
@@ -54,14 +100,14 @@ pipeline {
             }
         }
 
-        // 6. Delete Local Image
+        // 5️⃣ Delete Local Image
         stage('Delete Local Image') {
             steps {
                 sh 'docker rmi $FULL_IMAGE || true'
             }
         }
 
-        // 7. Update deployment.yaml
+        // 6️⃣ Update deployment.yaml
         stage('Update Deployment File') {
             steps {
                 sh '''
@@ -70,7 +116,7 @@ pipeline {
             }
         }
 
-        // 8. Deploy to Kubernetes
+        // 7️⃣ Deploy to Kubernetes
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([string(
@@ -99,7 +145,7 @@ pipeline {
         }
 
         failure {
-            echo "FAILED: Something went wrong ❌"
+            echo "FAILED: Check logs ❌"
         }
     }
 }
