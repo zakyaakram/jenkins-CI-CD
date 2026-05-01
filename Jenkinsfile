@@ -10,21 +10,22 @@ pipeline {
 
     stages {
 
-        // 🔥 Strong cleanup (fixes your main issue)
+        // 🔥 Clean everything (fixes random failures)
         stage('Clean Workspace') {
             steps {
                 deleteDir()
             }
         }
 
-        // 🔍 Checkout code
+        // ✅ Checkout YOUR repo (FIXED)
         stage('Checkout Code') {
             steps {
-                git url: 'https://github.com/Ibrahim-Adel15/Jenkins_App.git'
+                git branch: 'main',
+                    url: 'https://github.com/zakyaakram/jenkins-CI-CD.git'
             }
         }
 
-        // 🧪 Debug (VERY IMPORTANT for failures)
+        // 🔍 Debug (helps if anything breaks)
         stage('Debug Workspace') {
             steps {
                 sh '''
@@ -36,7 +37,7 @@ pipeline {
             }
         }
 
-        // ⚙️ Verify tools (prevents silent failures)
+        // ⚙️ Check tools
         stage('Check Tools') {
             steps {
                 sh '''
@@ -46,14 +47,14 @@ pipeline {
             }
         }
 
-        // 🧹 Fix Maven corruption issues
+        // 🧹 Fix Maven cache issues
         stage('Reset Maven Cache') {
             steps {
                 sh 'rm -rf ~/.m2/repository || true'
             }
         }
 
-        // 1️⃣ Unit Test
+        // 1️⃣ Unit Tests
         stage('Run Unit Tests') {
             steps {
                 sh 'mvn clean test'
@@ -67,7 +68,7 @@ pipeline {
             }
         }
 
-        // 🐳 Clean Docker (prevents disk issues)
+        // 🐳 Clean Docker
         stage('Docker Cleanup') {
             steps {
                 sh 'docker system prune -af || true'
@@ -84,7 +85,7 @@ pipeline {
             }
         }
 
-        // 4️⃣ Push to Docker Hub
+        // 4️⃣ Push Image
         stage('Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(
