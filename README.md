@@ -36,7 +36,7 @@ The Jenkins pipeline automates the following steps:
 
 ## 🏗️ Architecture Diagram
 
----
+
 
 <img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/5ae6b2be-f60a-428f-a723-66e1bf95f58a" />
 
