@@ -1,10 +1,5 @@
 # 🚀 Jenkins CI/CD Pipeline with Kubernetes Deployment
 
-https://img.shields.io/badge/Jenkins-CI%2FCD-blue  
-https://img.shields.io/badge/Docker-Containerization-lightblue  
-https://img.shields.io/badge/Kubernetes-Orchestration-green  
-https://img.shields.io/badge/GitHub-Source%20Control-black
-
 ## 📌 Project Overview
 
 This project demonstrates a complete **CI/CD pipeline** using **Jenkins**, **Docker**, and **Kubernetes (Minikube)**.
@@ -38,6 +33,13 @@ The Jenkins pipeline automates the following steps:
 8. ☸️ Deploy application to Kubernetes cluster
 
 ---
+🏗️ Architecture Diagram
+---
+
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/5ae6b2be-f60a-428f-a723-66e1bf95f58a" />
+
+
+---
 
 ## 🐳 Docker Hub
 
@@ -69,6 +71,13 @@ Instead of using kubeconfig, deployment is done using:
 * Service Account Token
 
 ### Steps:
+
+| Step | Command |
+| --- | --- |
+| Create Service Account | ``kubectl ``create ``serviceaccount ``jenkins-sa ``-n ``ivolve`` |
+| Assign Permissions | ``kubectl ``create ``clusterrolebinding ``jenkins-sa-binding ``--clusterrole=cluster-admin ``--serviceaccount=ivolve:jenkins-sa`` |
+| Generate Token | ``kubectl ``create ``token ``jenkins-sa ``-n ``ivolve`` |
+| Add Token to Jenkins | Add as **Secret Text** → ID: ``ServiceAccount-Token`` |
 
 #### 1. Create Service Account
 
