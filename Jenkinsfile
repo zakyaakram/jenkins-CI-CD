@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "zakyaakram52/jenkins-app:latest"
+        DOCKER_IMAGE   = "zakyaakram52/jenkins-app:latest"
         KUBE_NAMESPACE = "ivolve"
     }
 
@@ -10,26 +10,32 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                // مهم: ده بيضمن إن Jenkins يجيب repo الصح + branch الصح
-                checkout scm
+                withCredentials([usernamePassword(
+                    credentialsId: 'github-creds',
+                    usernameVariable: 'GIT_USER',
+                    passwordVariable: 'GIT_PASS'
+                )]) {
+                    sh '''
+                    git config --global credential.helper store
+                    git clone https://$GIT_USER:$GIT_PASS@github.com/zakyaakram/jenkins-CI-CD.git
+                    '''
+                }
             }
         }
 
         stage('Debug Workspace') {
             steps {
                 sh '''
-                echo "===== WORKSPACE ====="
+                echo "=== WORKSPACE FILES ==="
                 pwd
                 ls -la
-                echo "===== SEARCH DEPLOYMENT FILE ====="
-                find . -name deployment.yaml
                 '''
             }
         }
 
         stage('Unit Test') {
             steps {
-                sh 'mvn -v || true'
+                sh 'mvn -v'
                 sh 'mvn clean test'
             }
         }
@@ -69,40 +75,30 @@ pipeline {
                 sh 'docker rmi $DOCKER_IMAGE || true'
             }
         }
-        stage('Create Deployment File') {
-    steps {
-        sh '''
-        cat <<EOF > deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: jenkins-app
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: jenkins-app
-  template:
-    metadata:
-      labels:
-        app: jenkins-app
-    spec:
-      containers:
-      - name: app
-        image: $DOCKER_IMAGE
-        ports:
-        - containerPort: 8080
-EOF
-        '''
-    }
-}
+
+        stage('Update Deployment File') {
+            steps {
+                sh '''
+                echo "Before update:"
+                cat deployment.yaml
+
+                sed -i "s|image:.*|image: $DOCKER_IMAGE|g" deployment.yaml
+
+                echo "After update:"
+                cat deployment.yaml
+                '''
+            }
+        }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh '''
-                kubectl apply -f deployment.yaml -n $KUBE_NAMESPACE
-                kubectl get pods -n $KUBE_NAMESPACE
-                '''
+                withCredentials([string(credentialsId: 'kube-config', variable: 'KUBECONFIG_CONTENT')]) {
+                    writeFile file: 'kubeconfig.yaml', text: "$KUBECONFIG_CONTENT"
+                    sh '''
+                    kubectl --kubeconfig=kubeconfig.yaml apply -f deployment.yaml -n $KUBE_NAMESPACE
+                    kubectl --kubeconfig=kubeconfig.yaml get pods -n $KUBE_NAMESPACE
+                    '''
+                }
             }
         }
     }
