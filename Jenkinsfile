@@ -10,7 +10,6 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                cleanWs()  // clears workspace before cloning
                 withCredentials([usernamePassword(
                     credentialsId: 'github-creds',
                     usernameVariable: 'GIT_USER',
