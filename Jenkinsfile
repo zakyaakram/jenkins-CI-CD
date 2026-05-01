@@ -97,15 +97,17 @@ EOF
     }
 }
 
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh '''
-                kubectl apply -f deployment.yaml -n $KUBE_NAMESPACE
-                kubectl get pods -n $KUBE_NAMESPACE
-                '''
-            }
+       stage('Deploy to Kubernetes') {
+    steps {
+        withCredentials([file(credentialsId: 'kube-config', variable: 'KUBECONFIG')]) {
+            sh '''
+            export KUBECONFIG=$KUBECONFIG
+            kubectl apply -f deployment.yaml -n $KUBE_NAMESPACE
+            kubectl get pods -n $KUBE_NAMESPACE
+            '''
         }
     }
+}
 
     post {
         always {
