@@ -33,8 +33,10 @@ The Jenkins pipeline automates the following steps:
 8. ☸️ Deploy application to Kubernetes cluster
 
 ---
-🏗️ Architecture Diagram
----
+
+## 🏗️ Architecture Diagram
+
+
 
 <img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/5ae6b2be-f60a-428f-a723-66e1bf95f58a" />
 
@@ -79,25 +81,6 @@ Instead of using kubeconfig, deployment is done using:
 | Generate Token | ``kubectl ``create ``token ``jenkins-sa ``-n ``ivolve`` |
 | Add Token to Jenkins | Add as **Secret Text** → ID: ``ServiceAccount-Token`` |
 
-#### 1. Create Service Account
-
-```bash
-kubectl create serviceaccount jenkins-sa -n ivolve
-```
-
-#### 2. Assign Permissions
-
-```bash
-kubectl create clusterrolebinding jenkins-sa-binding \
-  --clusterrole=cluster-admin \
-  --serviceaccount=ivolve:jenkins-sa
-```
-
-#### 3. Generate Token
-
-```bash
-kubectl create token jenkins-sa -n ivolve
-```
 
 #### 4. Add Token to Jenkins
 
