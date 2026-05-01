@@ -2,26 +2,38 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "zakyaakram52/jenkins-app"
+        DOCKER_IMAGE = "zakyaakram52/jenkins-app:latest"
         KUBE_NAMESPACE = "ivolve"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
+                // clone repo correctly
                 git branch: 'main',
-                url: 'https://github.com/zakyaakram/jenkins-CI-CD.git''
+                    url: 'https://github.com/zakyaakram/jenkins-CI-CD.git'
             }
         }
 
-        stage('Run Unit Test') {
+        stage('Debug Workspace') {
             steps {
-                sh 'mvn clean test -U'
+                sh '''
+                echo "=== WORKSPACE FILES ==="
+                pwd
+                ls -la
+                '''
             }
         }
 
-        stage('Build Application') {
+        stage('Unit Test') {
+            steps {
+                sh 'mvn -v'
+                sh 'mvn clean test'
+            }
+        }
+
+        stage('Build App') {
             steps {
                 sh 'mvn clean package -DskipTests'
             }
@@ -29,11 +41,14 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh '''
+                docker version
+                docker build -t $DOCKER_IMAGE .
+                '''
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'docker-creds',
@@ -48,7 +63,7 @@ pipeline {
             }
         }
 
-        stage('Remove Local Image') {
+        stage('Delete Local Image') {
             steps {
                 sh 'docker rmi $DOCKER_IMAGE || true'
             }
@@ -57,7 +72,13 @@ pipeline {
         stage('Update Deployment File') {
             steps {
                 sh '''
+                echo "Before update:"
+                cat deployment.yaml
+
                 sed -i "s|image:.*|image: $DOCKER_IMAGE|g" deployment.yaml
+
+                echo "After update:"
+                cat deployment.yaml
                 '''
             }
         }
@@ -66,6 +87,7 @@ pipeline {
             steps {
                 sh '''
                 kubectl apply -f deployment.yaml -n $KUBE_NAMESPACE
+                kubectl get pods -n $KUBE_NAMESPACE
                 '''
             }
         }
@@ -73,13 +95,15 @@ pipeline {
 
     post {
         always {
-            echo 'Pipeline finished'
+            echo "Pipeline finished"
         }
+
         success {
-            echo 'SUCCESS 🚀 Deployment completed'
+            echo "Deployment SUCCESS 🚀"
         }
+
         failure {
-            echo 'FAILED ❌ Check logs'
+            echo "Pipeline FAILED ❌"
         }
     }
 }
