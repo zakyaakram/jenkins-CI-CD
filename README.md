@@ -1,5 +1,10 @@
 # 🚀 Jenkins CI/CD Pipeline with Kubernetes Deployment
 
+https://img.shields.io/badge/Jenkins-CI%2FCD-blue  
+https://img.shields.io/badge/Docker-Containerization-lightblue  
+https://img.shields.io/badge/Kubernetes-Orchestration-green  
+https://img.shields.io/badge/GitHub-Source%20Control-black
+
 ## 📌 Project Overview
 
 This project demonstrates a complete **CI/CD pipeline** using **Jenkins**, **Docker**, and **Kubernetes (Minikube)**.
