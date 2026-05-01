@@ -17,11 +17,6 @@ The pipeline automates building, testing, containerizing, and deploying an appli
 
 ---
 
-## 📂 Repository
-
-Source code used in this pipeline:
-👉 https://github.com/Ibrahim-Adel15/Jenkins_App.git
-
 ---
 
 ## ⚙️ Pipeline Workflow
@@ -158,7 +153,7 @@ The pipeline includes post-build actions:
 * ❌ Failure: Error notification
 
 ---
-##Pipline Flow
+## 📂Pipline Flow
 ---
 <img width="1818" height="245" alt="image" src="https://github.com/user-attachments/assets/a2db6a14-6954-4a0c-bf76-7dd538e31966" />
 
